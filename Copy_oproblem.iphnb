@@ -1,0 +1,365 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "mount_file_id": "16Wq1ac7HiZ0hFjRNy5AJjWcZuzB7MTqW",
+      "authorship_tag": "ABX9TyNBGU0YLWBTB4nr8YFcOpo8",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/XaeSavage/CopyCat/blob/main/Copy_oproblem.iphnb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!export OPENAI_API_KEY=\"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\""
+      ],
+      "metadata": {
+        "id": "PqX_ntjP5Xge"
+      },
+      "execution_count": 23,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%pip install openai"
+      ],
+      "metadata": {
+        "id": "Yq6fByNQ6ZHK",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "8e00d6ee-6a11-422e-e5a2-3277120f7438"
+      },
+      "execution_count": 24,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Looking in indexes: https://pypi.org/simple, https://us-python.pkg.dev/colab-wheels/public/simple/\n",
+            "Requirement already satisfied: openai in /usr/local/lib/python3.10/dist-packages (0.27.7)\n",
+            "Requirement already satisfied: requests>=2.20 in /usr/local/lib/python3.10/dist-packages (from openai) (2.27.1)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from openai) (4.65.0)\n",
+            "Requirement already satisfied: aiohttp in /usr/local/lib/python3.10/dist-packages (from openai) (3.8.4)\n",
+            "Requirement already satisfied: urllib3<1.27,>=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests>=2.20->openai) (1.26.15)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests>=2.20->openai) (2022.12.7)\n",
+            "Requirement already satisfied: charset-normalizer~=2.0.0 in /usr/local/lib/python3.10/dist-packages (from requests>=2.20->openai) (2.0.12)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/dist-packages (from requests>=2.20->openai) (3.4)\n",
+            "Requirement already satisfied: attrs>=17.3.0 in /usr/local/lib/python3.10/dist-packages (from aiohttp->openai) (23.1.0)\n",
+            "Requirement already satisfied: multidict<7.0,>=4.5 in /usr/local/lib/python3.10/dist-packages (from aiohttp->openai) (6.0.4)\n",
+            "Requirement already satisfied: async-timeout<5.0,>=4.0.0a3 in /usr/local/lib/python3.10/dist-packages (from aiohttp->openai) (4.0.2)\n",
+            "Requirement already satisfied: yarl<2.0,>=1.0 in /usr/local/lib/python3.10/dist-packages (from aiohttp->openai) (1.9.2)\n",
+            "Requirement already satisfied: frozenlist>=1.1.1 in /usr/local/lib/python3.10/dist-packages (from aiohttp->openai) (1.3.3)\n",
+            "Requirement already satisfied: aiosignal>=1.1.2 in /usr/local/lib/python3.10/dist-packages (from aiohttp->openai) (1.3.1)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import zipfile\n",
+        "\n",
+        "zip_file = \"mywords_split.zip\"  # Replace with the path to your ZIP file\n",
+        "extract_dir = \"/content/mywords_split/\"# Replace with the directory where you want to extract the contents\n",
+        "\n",
+        "# Extract the ZIP file\n",
+        "with zipfile.ZipFile(zip_file, 'r') as zip_ref:\n",
+        "    zip_ref.extractall(extract_dir)\n"
+      ],
+      "metadata": {
+        "id": "1jaFmcUg64nd"
+      },
+      "execution_count": 25,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Step 1: Import the necessary modules\n",
+        "Let's start by importing the required modules for training the language model and manipulating files."
+      ],
+      "metadata": {
+        "id": "h4aq9xeXyJdr"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "import json\n",
+        "import re\n",
+        "import openai\n",
+        "import shutil\n"
+      ],
+      "metadata": {
+        "id": "EJB2WWCpyMj2"
+      },
+      "execution_count": 27,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Step 2: Set up OpenAI API\n",
+        "Next, we need to set up the OpenAI API. You'll need to have an OpenAI API key for this. You can set the OPENAI_API_KEY environment variable to your API key or directly assign it to the api_key variable."
+      ],
+      "metadata": {
+        "id": "DRa4PWQrySwf"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "api_key = os.getenv(\"OPENAI_API_KEY\")\n",
+        "openai.api_keyapi_key = api_key\n"
+      ],
+      "metadata": {
+        "id": "A7SeUvTeyg37"
+      },
+      "execution_count": 29,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Step 3: Load and preprocess the data\n",
+        "We'll load and preprocess the individual files containing your writings. We'll also process the data to extract emotional tones using punctuation and emojis."
+      ],
+      "metadata": {
+        "id": "J8AUeCjuyskT"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data_dir = \"mywords_split\"  # Directory containing the individual files\n",
+        "file_prefix = \"mywords_part\"\n",
+        "file_extension = \".txt\"\n",
+        "output_file = \"combined_data.txt\"\n",
+        "\n",
+        "combined_data = \"\"\n",
+        "\n",
+        "for i in range(1, 173):\n",
+        "    file_path = os.path.join(data_dir, file_prefix + str(i) + file_extension)\n",
+        "    with open(file_path, \"r\", encoding=\"utf-8\") as file:\n",
+        "        content = file.read()\n",
+        "        combined_data += content\n",
+        "\n",
+        "# Preprocess the data\n",
+        "# Remove leading/trailing whitespaces and empty lines\n",
+        "combined_data = \"\\n\".join([line.strip() for line in combined_data.split(\"\\n\") if line.strip()])\n",
+        "\n",
+        "# Extract emotional tones using punctuation and emojis\n",
+        "tones = []\n",
+        "punctuation_pattern = r\"[.!?]\"\n",
+        "emoji_pattern = r\"[\\U0001F600-\\U0001F6FF]\"\n",
+        "matches = re.findall(punctuation_pattern + \"|\" + emoji_pattern, combined_data)\n",
+        "tones = [match for match in matches if match not in (\".\", \"!\", \"?\")]\n",
+        "tones = set(tones)\n"
+      ],
+      "metadata": {
+        "id": "6Ik1-iW0y23z"
+      },
+      "execution_count": 30,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Step 4: Fine-tune the language model\n",
+        "We'll now fine-tune the language model using your combined data."
+      ],
+      "metadata": {
+        "id": "-RXblr82y74P"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Step 5: Create a beautiful chat interface\n",
+        "To create a beautiful chat interface, we'll assume you're using HTML and CSS. We'll provide a template for the interface using some CSS styling to achieve the desired effects."
+      ],
+      "metadata": {
+        "id": "hVZdZ4hXzKpv"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Step 6: Save the model and interface\n",
+        "To save the model and interface, we'll create a folder with the desired name, copy the model file and the chat interface file into it, and create a single archive containing everything."
+      ],
+      "metadata": {
+        "id": "vPAfQMiizpAs"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model_dir = \"RememberMe_AI\"\n",
+        "os.makedirs(model_dir, exist_ok=True)\n",
+        "\n",
+        "shutil.copy(\"my_model.h5\", model_dir)\n",
+        "shutil.copy(\"chat_interface.html\", model_dir)\n",
+        "\n",
+        "shutil.make_archive(model_dir, \"zip\", model_dir)\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 674
+        },
+        "id": "qN8weI3AOegy",
+        "outputId": "a8cda006-c671-4002-c4d9-f586346b545b"
+      },
+      "execution_count": 37,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "FileNotFoundError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mFileNotFoundError\u001b[0m                         Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-37-c9c2c6cf55d3>\u001b[0m in \u001b[0;36m<cell line: 4>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      2\u001b[0m \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mmakedirs\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mmodel_dir\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mexist_ok\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;32mTrue\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      3\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 4\u001b[0;31m \u001b[0mshutil\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcopy\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"my_model.h5\"\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mmodel_dir\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      5\u001b[0m \u001b[0mshutil\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcopy\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"chat_interface.html\"\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mmodel_dir\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      6\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/lib/python3.10/shutil.py\u001b[0m in \u001b[0;36mcopy\u001b[0;34m(src, dst, follow_symlinks)\u001b[0m\n\u001b[1;32m    415\u001b[0m     \u001b[0;32mif\u001b[0m \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mpath\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0misdir\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mdst\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    416\u001b[0m         \u001b[0mdst\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mpath\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mjoin\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mdst\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mpath\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mbasename\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0msrc\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 417\u001b[0;31m     \u001b[0mcopyfile\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0msrc\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mdst\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mfollow_symlinks\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mfollow_symlinks\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    418\u001b[0m     \u001b[0mcopymode\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0msrc\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mdst\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mfollow_symlinks\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mfollow_symlinks\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    419\u001b[0m     \u001b[0;32mreturn\u001b[0m \u001b[0mdst\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/lib/python3.10/shutil.py\u001b[0m in \u001b[0;36mcopyfile\u001b[0;34m(src, dst, follow_symlinks)\u001b[0m\n\u001b[1;32m    252\u001b[0m         \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0msymlink\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mreadlink\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0msrc\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mdst\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    253\u001b[0m     \u001b[0;32melse\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 254\u001b[0;31m         \u001b[0;32mwith\u001b[0m \u001b[0mopen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0msrc\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'rb'\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0mfsrc\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    255\u001b[0m             \u001b[0;32mtry\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    256\u001b[0m                 \u001b[0;32mwith\u001b[0m \u001b[0mopen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mdst\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'wb'\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0mfdst\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mFileNotFoundError\u001b[0m: [Errno 2] No such file or directory: 'my_model.h5'"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "\n",
+        "Step 7: Flask Setup\n",
+        "Flask is a Python web framework that will allow us to create a server to host the chat interface and handle the model's responses. Let's install Flask and set up the Flask app."
+      ],
+      "metadata": {
+        "id": "V5Iwj7SB2ddr"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pip install Flask"
+      ],
+      "metadata": {
+        "id": "wvqDnSmf0VJg"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Step 2: Create a Flask app\n",
+        "Create a new Python file, let's call it app.py, and add the following code:"
+      ],
+      "metadata": {
+        "id": "49yLiddb0g_l"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from flask import Flask, render_template, request\n",
+        "import openai\n",
+        "\n",
+        "app = Flask(__name__)\n",
+        "\n",
+        "# Load your OpenAI API key\n",
+        "api_key = os.getenv(\"OPENAI_API_KEY\")\n",
+        "openai.api_key = api_key\n",
+        "\n",
+        "# Load your fine-tuned model ID\n",
+        "model_id = \"<RememberMe_AI>\"\n",
+        "model = openai.ChatCompletion.retrieve(model_id)\n",
+        "\n",
+        "@app.route(\"/\")\n",
+        "def index():\n",
+        "    return render_template(\"chat_interface.html\")\n",
+        "\n",
+        "@app.route(\"/get_response\", methods=[\"POST\"])\n",
+        "def get_response():\n",
+        "    message = request.form[\"message\"]\n",
+        "    response = model.generate_response(message)\n",
+        "    return response.choices[0].message.content\n",
+        "\n",
+        "if __name__ == \"__main__\":\n",
+        "    app.run()\n"
+      ],
+      "metadata": {
+        "id": "obdboyTM2-sx"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Make sure to replace <YOUR_API_KEY> with your OpenAI API key and <YOUR_MODEL_ID> with the ID of your fine-tuned model.\n",
+        "\n",
+        "Step 3: Start the server\n",
+        "Open a terminal, navigate to the directory where app.py is located, and run the following command:"
+      ],
+      "metadata": {
+        "id": "BNE-L3Ma03Oh"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "Python app.py"
+      ],
+      "metadata": {
+        "id": "D7PKgcmB09OD"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Step 4: Interact with the chat interface\n",
+        "Open your web browser and navigate to http://127.0.0.1:5000/ or http://localhost:5000/. You should see your chat interface."
+      ],
+      "metadata": {
+        "id": "rjpnX1mP1UDl"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "* Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)"
+      ],
+      "metadata": {
+        "id": "BNQ8vUc11ZSH"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
